@@ -1,61 +1,74 @@
+import sql from "mssql";
 import mysql from "mysql2";
 import dotenv from "dotenv";
-import Sequelize from "sequelize";
+import { Sequelize, DataTypes } from "sequelize";
 import * as tedious from "tedious";
 
 dotenv.config();
 
 class DB {
+  requester = "";
+  item = "";
+  sequelize = "";
   constructor() {
-    this.con = new Sequelize({
-      dialect: "mssql",
-      dialectModule: tedious,
-      host: "ERICBERNARDIMSSQLSERVER01",
-      database: "OFFICE",
-      username: "ERICBERNARDI", // Substitua pelo nome de usuário do Windows
-      dialectOptions: {
-        authentication: {
-          type: "ntlm", // Usar autenticação do Windows
-        },
+    this.sequelize = new Sequelize(
+      "OFFICE",
+      "root",
+      process.env.DATABASE_PASSWORD,
+      {
+        host: "localhost",
+        dialect: "mysql",
+      }
+    );
+  }
+
+  async handleCreateTable() {
+    this.requester = await this.sequelize.define("requesters", {
+      name: {
+        type: DataTypes.STRING,
+      },
+      item: {
+        type: DataTypes.TEXT,
       },
     });
-  }
 
-  testConnection() {
-    try {
-      this.con.authenticate();
-      console.log("Conexão com o banco de dados bem-sucedida.");
-    } catch (error) {
-      console.error("Erro ao conectar ao banco de dados:", error);
-    }
-  }
-
-  handleCreateTable() {
-    this.con.define("requester", {
-      user_name: {
-        type: Sequelize.STRING,
-        allowNull: false,
+    this.item = await this.sequelize.define("items", {
+      description: {
+        type: DataTypes.STRING,
       },
-      item_description: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-      },
-      item_price: {
-        type: Sequelize.STRING,
-        allowNull: false,
+      price: {
+        type: DataTypes.STRING,
       },
     });
-  }
 
-  updateDatabase() {
-    this.con
+    this.sequelize
       .sync()
       .then(() => {
-        console.log("Tabela de Requester criada com sucesso!");
+        console.log("Tabelas criadas com sucesso.");
       })
       .catch((error) => {
-        console.error("Erro ao criar a tabela de Requester:", error);
+        console.error("Erro ao criar tabelas:", error);
       });
+  }
+
+  async setarRequester() {
+    const requester = await this.requester.build({
+      name: "Nome do Solicitante",
+    });
+    const item = await this.item.build({
+      description: "Descrição do Item",
+      price: "Preço do Item",
+    });
+
+    requester.save().then(() => {
+      console.log('Deu certo!')
+    }).catch((error) => {
+      console.error('Erro ao adicionar solicitante:', error);
+    });
+        console.log('Item adicionado com sucesso.');
+    item.save().then(() => {}).catch((error) => {
+      console.error('Erro ao adicionar item: ', error)
+    })
   }
 }
 
