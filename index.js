@@ -2,11 +2,8 @@ import express from "express";
 import DB from "./db.js";
 import dotenv from 'dotenv';
 
-console.log('index.js');
-
 dotenv.config();
 const server = express();
-const port = 3000;
 const db = new DB();
 
 server.use(express.json());
@@ -33,5 +30,6 @@ server.use((req, res, next) => {
     }
   });
 
-  db.handleCreateTable();
-  db.updateDatabase();
+  db.handleCreateTable().then(() => {
+    db.setarRequester();
+  });
